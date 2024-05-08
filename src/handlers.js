@@ -69,16 +69,47 @@ const addBookHandler = (request, h) => {
   }).code(500);
 };
 
-const getAllBooksHandler = () => ({
-  status: 'success',
-  data: {
-    books: books.map((book) => ({
-      id: book.id,
-      name: book.name,
-      publisher: book.publisher,
-    })),
-  },
-});
+const getAllBooksHandler = (request, h) => {
+  const { name, reading, finished } = request.query;
+  let bookBuffer = books;
+
+  // Filter berdasarkan kecocokan dengan nama (case insensitive)
+  if (name) {
+    bookBuffer = bookBuffer.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
+  }
+
+  /**
+   * Filter berdasarkan status keaktifan baca (0 = false; 1 = true)
+   * Menggunakan 'reading === 0' dan 'reading === 1' agar terhindar dari falsy
+  */
+  if (reading === '0') {
+    bookBuffer = bookBuffer.filter((book) => !book.reading);
+  } else if (reading === '1') {
+    bookBuffer = bookBuffer.filter((book) => book.reading);
+  }
+
+  /**
+   * Filter berdasarkan progress keselesaian baca (0 = false; 1 = true)
+   * Menggunakan 'finished === 0' dan 'finished === 1' agar terhindar dari falsy
+  */
+  if (finished === '0') {
+    bookBuffer = bookBuffer.filter((book) => !book.finished);
+  } else if (finished === '1') {
+    bookBuffer = bookBuffer.filter((book) => book.finished);
+  }
+
+  // Return hasil setelah filter maupun tidak di-filter
+  return h.response({
+    status: 'success',
+    data: {
+      books: bookBuffer.map((book) => ({
+        id: book.id,
+        name: book.name,
+        publisher: book.publisher,
+      })),
+    },
+  }).code(200);
+};
 
 const getBookByIdHandler = (request, h) => {
   const { bookId } = request.params;
